@@ -40,8 +40,8 @@
         message (when current-index
                   (nth messages current-index))]
     [:<>
-     [ hello-world ]
-     [ greeting "Champ" ]
+     [hello-world]
+     [greeting "Champ"]
      [:div {:style {:font-family "sans-serif"}}
       [:h2 "Random Message"]
       [:p {:style {:font-size "1.2em"}}
@@ -59,6 +59,5 @@
 
 (defn ^:export init []
   (choose-initial-message!)
-  (mount!)
-  )
+  (mount!))
 
