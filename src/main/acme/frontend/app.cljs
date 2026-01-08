@@ -18,7 +18,6 @@
   (swap! app-state assoc :current-index (random-index)))
 
 (defn shuffle-message! []
-  (println "shuffling")
   (swap! app-state
          (fn [{:keys [current-index] :as state}]
            (let [new-index (random-index)]
@@ -43,7 +42,7 @@
      [hello-world]
      [greeting "Champ"]
      [:div {:style {:font-family "sans-serif"}}
-      [:h2 "Random Message"]
+      [:h2 (str "Random Message: " current-index)]
       [:p {:style {:font-size "1.2em"}}
        message]
       [:button {:on-click shuffle-message!}
@@ -54,10 +53,7 @@
 (defn mount! []
   (rdom/render root [app]))
 
-(defn ^:dev/after-load reload! []
-  (mount!))
-
-(defn ^:export init []
+(defn ^:export ^:dev/after-load init []
   (choose-initial-message!)
   (mount!))
 
