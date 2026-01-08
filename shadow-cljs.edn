@@ -5,10 +5,11 @@
   "src/test"]
 
  :dependencies
- [[reagent "2.0.1"]]
+ [[reagent "2.0.1"]
+  [cider/cider-nrepl "0.58.0"]]
 
  :dev-http {8080 "public"}
  :builds
  {:frontend {:target :browser
-             :modules {:main {:init-fn acme.frontend.app/init}}
-             }}}
+             :modules {:main {:init-fn acme.frontend.app/init}}}}
+ :release {:compiler-options {:optimizations :simple}}}
