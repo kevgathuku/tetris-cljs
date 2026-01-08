@@ -1,4 +1,5 @@
-(ns acme.frontend.app)
+(ns acme.frontend.app
+  (:require [reagent.core :as r] [reagent.dom.client :as rdom]))
 
 (def messages
   ["Hello, world!"
@@ -8,7 +9,7 @@
    "Shadow-cljs makes this easy."])
 
 (defonce app-state
-  (atom {:current-index nil}))
+  (r/atom {:current-index nil}))
 
 (defn random-index []
   (rand-int (count messages)))
@@ -17,6 +18,7 @@
   (swap! app-state assoc :current-index (random-index)))
 
 (defn shuffle-message! []
+  (println "shuffling")
   (swap! app-state
          (fn [{:keys [current-index] :as state}]
            (let [new-index (random-index)]
@@ -25,32 +27,29 @@
                state
                (assoc state :current-index new-index))))))
 
-(defn render! []
+(defn app []
   (let [{:keys [current-index]} @app-state
-        root (.getElementById js/document "app")
         message (when current-index
                   (nth messages current-index))]
-    (set! (.-innerHTML root)
-          (str
-           "<div style='font-family: sans-serif;'>"
-           "<h2>Random Message</h2>"
-           "<p style='font-size: 1.2em;'>" message "</p>"
-           "<button id='shuffle-btn'>Shuffle</button>"
-           "</div>"))
+    [:div {:style {:font-family "sans-serif"}}
+     [:h2 "Random Message"]
+     [:p {:style {:font-size "1.2em"}}
+      message]
+     [:button {:on-click shuffle-message!}
+      "Shuffle"]]))
 
-    ;; attach button handler after render
-    (when-let [btn (.getElementById js/document "shuffle-btn")]
-      (.addEventListener btn "click" shuffle-message!))))
+(defonce root (rdom/create-root (.getElementById js/document "app")))
 
-(add-watch app-state :rerender
-           (fn [_ _ _ _]
-             (render!)))
+(defn mount! []
+  (rdom/render root [app]))
 
+(defn ^:dev/after-load reload! []
+  (mount!))
 
 (defn ^:export init []
  (.appendChild (js/document.getElementById "root")
                 (js/document.createTextNode "Hello, in the repl"))
  (choose-initial-message!)
-  (render!)
+  (mount!)
   )
 
