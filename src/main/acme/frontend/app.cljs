@@ -27,16 +27,27 @@
                state
                (assoc state :current-index new-index))))))
 
+(defn- hello-world []
+  [:ul
+   [:li "Hello"]
+   [:li {:style {:color "red"}} "World!"]])
+
+(defn greeting [name]
+  [:p "Hello " name])
+
 (defn app []
   (let [{:keys [current-index]} @app-state
         message (when current-index
                   (nth messages current-index))]
-    [:div {:style {:font-family "sans-serif"}}
-     [:h2 "Random Message"]
-     [:p {:style {:font-size "1.2em"}}
-      message]
-     [:button {:on-click shuffle-message!}
-      "Shuffle"]]))
+    [:<>
+     [ hello-world ]
+     [ greeting "Champ" ]
+     [:div {:style {:font-family "sans-serif"}}
+      [:h2 "Random Message"]
+      [:p {:style {:font-size "1.2em"}}
+       message]
+      [:button {:on-click shuffle-message!}
+       "Shuffle"]]]))
 
 (defonce root (rdom/create-root (.getElementById js/document "app")))
 
@@ -47,9 +58,7 @@
   (mount!))
 
 (defn ^:export init []
- (.appendChild (js/document.getElementById "root")
-                (js/document.createTextNode "Hello, in the repl"))
- (choose-initial-message!)
+  (choose-initial-message!)
   (mount!)
   )
 
