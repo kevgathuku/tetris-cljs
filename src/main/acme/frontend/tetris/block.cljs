@@ -37,4 +37,5 @@
   (defn- rotate-old [tetro]
     (update tetro :rotation rotate-degrees))
   (rotate-old x)
+  (take 5 (iterate rotate x))
   (repeatedly 10 #(rand-nth shapes)))
