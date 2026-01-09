@@ -1,5 +1,6 @@
 (ns acme.frontend.app
-  (:require [reagent.core :as r] [reagent.dom.client :as rdom]))
+  (:require [reagent.core :as r] [reagent.dom.client :as rdom]
+            [acme.frontend.tetris.block :as block]))
 
 (def messages
   ["Hello, world!"
@@ -9,12 +10,13 @@
    "Shadow-cljs makes this easy."])
 
 (defonce app-state
-  (r/atom {:current-index nil}))
+  (r/atom {:current-index nil :current-block nil}))
 
 (defn random-index []
   (rand-int (count messages)))
 
-(defn choose-initial-message! []
+(defn assign-initial-state! []
+  (swap! app-state assoc :current-block (block/create {}))
   (swap! app-state assoc :current-index (random-index)))
 
 (defn shuffle-message! []
@@ -31,8 +33,17 @@
    [:li "Hello"]
    [:li {:style {:color "red"}} "World!"]])
 
-(defn greeting [name]
-  [:p "Hello " name])
+(defn tetris []
+  (let [{:keys [current-block]} @app-state]
+    [:div.hero
+     [:h3 "Tetris Block"]
+     (if current-block
+       [:div
+        [:p (str "Shape: " (:shape current-block))]
+        [:p (str "Rotation: " (:rotation current-block) "°")]
+        [:p (str "Location: x=" (get-in current-block [:location :x])
+                 " y=" (get-in current-block [:location :y]))]]
+       [:p "No block created yet"])]))
 
 (defn app []
   (let [{:keys [current-index]} @app-state
@@ -40,13 +51,13 @@
                   (nth messages current-index))]
     [:<>
      [hello-world]
-     [greeting "Champ"]
      [:div {:style {:font-family "sans-serif"}}
       [:h2 (str "Random Message: " current-index)]
       [:p {:style {:font-size "1.2em"}}
        message]
       [:button {:on-click shuffle-message!}
-       "Shuffle"]]]))
+       "Shuffle"]]
+     [tetris]]))
 
 (defonce root (rdom/create-root (.getElementById js/document "app")))
 
@@ -54,6 +65,6 @@
   (rdom/render root [app]))
 
 (defn ^:export ^:dev/after-load init []
-  (choose-initial-message!)
+  (assign-initial-state!)
   (mount!))
 
