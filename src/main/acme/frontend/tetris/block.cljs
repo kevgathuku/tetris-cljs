@@ -5,7 +5,7 @@
 
 (defn create [{:keys [rotation location]
                :or {rotation 0
-                    location {:x 5 :y 1}}}]
+                    location {:x 4 :y 1}}}]
   {:shape (rand-nth shapes)
    :rotation rotation
    :location location})

@@ -53,7 +53,7 @@
   [:svg {:width 200 :height 400}
    [:rect {:width 200 :height 400 :fill "black"}]
    (let [{:keys [x y]} (:location current-block)]
-     [:rect {:x (* (dec x) 20) ; Scale to grid
+     [:rect {:x (* x 20) ; Scale to grid
              :y (* (dec y) 20) ; start at 0 - increment by 20 downwards each tick
              :width 20
              :height 20
