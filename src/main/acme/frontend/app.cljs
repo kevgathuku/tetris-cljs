@@ -25,7 +25,7 @@
   (swap! app-state
          (fn [{:keys [current-index] :as state}]
            (let [new-index (random-index)]
-             ;; ensure it's different
+             ;; no change if it's different
              (if (= new-index current-index)
                state
                (assoc state :current-index new-index))))))
@@ -37,18 +37,28 @@
           (js/setInterval
            (fn []
              (swap! app-state update :current-block block/move-down))
-           1000)))
+           800)))
 
 (defn stop-tick! []
   (when @tick-interval
     (js/clearInterval @tick-interval)
     (reset! tick-interval nil)))
 
+(defn- board [current-block]
+  [:svg {:width 200 :height 400}
+   [:rect {:width 200 :height 400 :fill "black"}]
+   (let [{:keys [x y]} (:location current-block)]
+     [:rect {:x (* (dec x) 20)           ; Scale to grid
+             :y (* (dec y) 20) ; start at 0 - increment by 20 downwards each tick
+             :width 20
+             :height 20
+             :fill "red"}])])
+
 (defn tetris []
   (let [{:keys [current-block]} @app-state
         points (when current-block (block/points current-block))]
     [:div.hero
-     [:h3 "Tetris Block"]
+     [:h3 "Tetris"]
      (if current-block
        [:div
         [:p (str "Shape: " (:shape current-block))]
@@ -56,7 +66,8 @@
         [:p (str "Location: x=" (get-in current-block [:location :x])
                  " y=" (get-in current-block [:location :y]))]
         [:p "Points: " (pr-str points)]]
-       [:p "No block created yet"])]))
+       [:p "No block created yet"])
+     [board current-block]]))
 
 (defn app []
   (let [{:keys [current-index]} @app-state
