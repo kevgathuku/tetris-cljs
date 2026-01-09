@@ -30,25 +30,30 @@
                state
                (assoc state :current-index new-index))))))
 
-(defn start-tick! []
-  (when @tick-interval
-    (js/clearInterval @tick-interval))
-  (reset! tick-interval
-          (js/setInterval
-           (fn []
-             (swap! app-state update :current-block block/move-down))
-           800)))
+(defn- tick-game! []
+  (let [current-block (:current-block @app-state)
+        at-bottom? (>= (get-in current-block [:location :y]) 20)]
+    (println "At bottom?" at-bottom?)
 
-(defn stop-tick! []
+    (if at-bottom?
+      (swap! app-state assoc :current-block (block/create {}))
+      (swap! app-state update :current-block block/move-down))))
+
+(defn- stop-tick! []
   (when @tick-interval
     (js/clearInterval @tick-interval)
     (reset! tick-interval nil)))
+
+(defn- start-tick! []
+  (stop-tick!)  ; Reuse stop logic for cleanup
+  (reset! tick-interval
+          (js/setInterval tick-game! 800)))
 
 (defn- board [current-block]
   [:svg {:width 200 :height 400}
    [:rect {:width 200 :height 400 :fill "black"}]
    (let [{:keys [x y]} (:location current-block)]
-     [:rect {:x (* (dec x) 20)           ; Scale to grid
+     [:rect {:x (* (dec x) 20) ; Scale to grid
              :y (* (dec y) 20) ; start at 0 - increment by 20 downwards each tick
              :width 20
              :height 20
