@@ -14,14 +14,14 @@
 
 (defonce tick-interval (atom nil))
 
-(defn random-index []
+(defn- random-index []
   (rand-int (count messages)))
 
-(defn assign-initial-state! []
+(defn- assign-initial-state! []
   (swap! app-state assoc :current-block (block/create {}))
   (swap! app-state assoc :current-index (random-index)))
 
-(defn shuffle-message! []
+(defn- shuffle-message! []
   (swap! app-state
          (fn [{:keys [current-index] :as state}]
            (let [new-index (random-index)]
@@ -45,7 +45,8 @@
     (reset! tick-interval nil)))
 
 (defn tetris []
-  (let [{:keys [current-block]} @app-state]
+  (let [{:keys [current-block]} @app-state
+        points (when current-block (block/points current-block))]
     [:div.hero
      [:h3 "Tetris Block"]
      (if current-block
@@ -53,7 +54,8 @@
         [:p (str "Shape: " (:shape current-block))]
         [:p (str "Rotation: " (:rotation current-block) "°")]
         [:p (str "Location: x=" (get-in current-block [:location :x])
-                 " y=" (get-in current-block [:location :y]))]]
+                 " y=" (get-in current-block [:location :y]))]
+        [:p "Points: " (pr-str points)]]
        [:p "No block created yet"])]))
 
 (defn app []

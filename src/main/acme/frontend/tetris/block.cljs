@@ -22,6 +22,9 @@
 (defn rotate [tetro]
   (update tetro :rotation #(mod (+ % 90) 360)))
 
+(defn points [tetro]
+  (vec (vals (:location tetro))))
+
 (comment
   (def x (create {:location {:x 1 :y 1}}))
   (move-right x)
