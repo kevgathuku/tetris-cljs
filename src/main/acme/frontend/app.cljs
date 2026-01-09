@@ -12,6 +12,8 @@
 (defonce app-state
   (r/atom {:current-index nil :current-block nil}))
 
+(defonce tick-interval (atom nil))
+
 (defn random-index []
   (rand-int (count messages)))
 
@@ -28,10 +30,19 @@
                state
                (assoc state :current-index new-index))))))
 
-(defn- hello-world []
-  [:ul
-   [:li "Hello"]
-   [:li {:style {:color "red"}} "World!"]])
+(defn start-tick! []
+  (when @tick-interval
+    (js/clearInterval @tick-interval))
+  (reset! tick-interval
+          (js/setInterval
+           (fn []
+             (swap! app-state update :current-block block/move-down))
+           1000)))
+
+(defn stop-tick! []
+  (when @tick-interval
+    (js/clearInterval @tick-interval)
+    (reset! tick-interval nil)))
 
 (defn tetris []
   (let [{:keys [current-block]} @app-state]
@@ -50,7 +61,6 @@
         message (when current-index
                   (nth messages current-index))]
     [:<>
-     [hello-world]
      [:div {:style {:font-family "sans-serif"}}
       [:h2 (str "Random Message: " current-index)]
       [:p {:style {:font-size "1.2em"}}
@@ -64,7 +74,11 @@
 (defn mount! []
   (rdom/render root [app]))
 
+(defn ^:dev/before-load stop []
+  (stop-tick!))
+
 (defn ^:export ^:dev/after-load init []
   (assign-initial-state!)
+  (start-tick!)
   (mount!))
 
