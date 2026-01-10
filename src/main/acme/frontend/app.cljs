@@ -32,8 +32,10 @@
 
 (defn- tick-game! []
   (let [current-block (:current-block @app-state)
-        at-bottom? (>= (get-in current-block [:location 1]) 20)]
-    (println "At bottom?" at-bottom?)
+        points (block/show current-block)
+        max-y (apply max (map second points))
+        at-bottom? (>= max-y 19)]
+    (js/console.log "Max Y:" max-y "At bottom?" at-bottom?)
 
     (if at-bottom?
       (swap! app-state assoc :current-block (block/create {}))
@@ -52,8 +54,8 @@
 (defn- render-points [points]
   (js/console.log "points:" (pr-str  points))
   (into [:g]
-        (for [[x y] points] [:rect {:x (* x 20) ; Scale to grid
-                                    :y (* y 20) ; start at 0 - increment by 20 downwards each tick
+        (for [[x y] points] [:rect {:x (* x 20)
+                                    :y (* y 20)
                                     :width 20
                                     :height 20
                                     :fill "red"}])))
