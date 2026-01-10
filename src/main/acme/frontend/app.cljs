@@ -32,7 +32,7 @@
 
 (defn- tick-game! []
   (let [current-block (:current-block @app-state)
-        at-bottom? (>= (get-in current-block [:location :y]) 20)]
+        at-bottom? (>= (get-in current-block [:location 1]) 20)]
     (println "At bottom?" at-bottom?)
 
     (if at-bottom?
@@ -49,28 +49,30 @@
   (reset! tick-interval
           (js/setInterval tick-game! 800)))
 
+(defn- render-points [points]
+  (js/console.log "points:" (pr-str  points))
+  (into [:g]
+        (for [[x y] points] [:rect {:x (* x 20) ; Scale to grid
+                                    :y (* y 20) ; start at 0 - increment by 20 downwards each tick
+                                    :width 20
+                                    :height 20
+                                    :fill "red"}])))
+
 (defn- board [current-block]
   [:svg {:width 200 :height 400}
    [:rect {:width 200 :height 400 :fill "black"}]
-   (let [{:keys [x y]} (:location current-block)]
-     [:rect {:x (* x 20) ; Scale to grid
-             :y (* (dec y) 20) ; start at 0 - increment by 20 downwards each tick
-             :width 20
-             :height 20
-             :fill "red"}])])
+   [render-points (block/show current-block)]])
 
 (defn tetris []
-  (let [{:keys [current-block]} @app-state
-        points (when current-block (block/points current-block))]
+  (let [{:keys [current-block]} @app-state]
     [:div.hero
      [:h3 "Tetris"]
      (if current-block
        [:div
         [:p (str "Shape: " (:shape current-block))]
         [:p (str "Rotation: " (:rotation current-block) "°")]
-        [:p (str "Location: x=" (get-in current-block [:location :x])
-                 " y=" (get-in current-block [:location :y]))]
-        [:p "Points: " (pr-str points)]]
+        [:p (str "Location: " (pr-str (:location current-block)))]
+        [:p "Points: " (pr-str (block/points current-block))]]
        [:p "No block created yet"])
      [board current-block]]))
 
