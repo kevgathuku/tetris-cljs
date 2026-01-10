@@ -1,0 +1,134 @@
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+## Project Overview
+
+A Tetris game implementation in ClojureScript using Reagent (React wrapper) and Shadow-CLJS for compilation and hot-reloading.
+
+## Development Workflow
+
+**Start development server:**
+
+```bash
+npx shadow-cljs watch frontend
+```
+
+This starts the development server at <http://localhost:8080> with hot-reloading enabled.
+
+**Build for production:**
+
+```bash
+npx shadow-cljs release frontend
+```
+
+**REPL connection:**
+Shadow-CLJS provides nREPL support. Connect to the REPL after starting the watch command. The `.nrepl-port` file contains the port number.
+
+## Architecture
+
+### Module Structure
+
+**Tetris Game Logic** (`src/main/acme/frontend/tetris/`):
+
+- `point.cljs` - Core point manipulation (translate, left, right, down)
+- `points.cljs` - Collection-level point operations
+- `block.cljs` - Tetromino (game piece) logic including shapes, movement, and rotation
+
+**Application Layer** (`src/main/acme/frontend/`):
+
+- `app.cljs` - Main Reagent application with game loop and rendering
+
+### Data Model
+
+**Tetromino (Block) Structure:**
+
+```clojure
+{:shape :t          ; Keyword from #{:t :o :l :i :s :z :j}
+ :rotation 0        ; Degrees: 0, 90, 180, 270
+ :location [2 0]}   ; Grid coordinates as [x y] vector (not pixels)
+```
+
+**Shape Definitions:**
+Shapes are defined as vectors of `[x y]` coordinate pairs in `block.cljs`. Each tetromino has 4 coordinate pairs representing its blocks in a **4×4 bounding box** relative coordinate space. All shapes have a minimum y-coordinate of 0, allowing them to render at the top of the board when combined with a starting location.
+
+### Coordinate Systems
+
+**0-Indexed Grid System:**
+
+- Game uses **0-indexed coordinates** throughout (rows 0-19, columns 0-9)
+- Grid coordinates are vectors: `[x y]` where x is column, y is row
+- Valid board positions: x ∈ [0, 9], y ∈ [0, 19]
+
+**Grid vs Pixel Coordinates:**
+
+- Game logic uses grid coordinates (integer row/column positions)
+- SVG rendering requires pixel coordinates
+- Conversion: `pixel = grid * cell-size` (currently 20px per cell)
+- Direct mapping with no offset: grid coordinate 0 → pixel 0, grid coordinate 1 → pixel 20, etc.
+
+**SVG Origin:**
+
+- (0, 0) is at top-left corner
+- Y-axis increases downward (row 0 at top, row 19 at bottom)
+- Board is rendered as 200×400px SVG (10 columns × 20 rows with 20px cells)
+
+### State Management
+
+**Global State:**
+
+```clojure
+app-state (r/atom {:current-index nil    ; For message shuffling demo
+                   :current-block nil})  ; Active falling tetromino
+```
+
+**Game Loop:**
+Managed via `js/setInterval` with cleanup hooks:
+
+- `start-tick!` - Initializes game loop (800ms interval), calls `stop-tick!` first to prevent stacking
+- `stop-tick!` - Cleanup function to clear interval
+- `tick-game!` - Called each tick to move block down or spawn new one when bottom is reached
+- Bottom detection: Checks the maximum y-coordinate of all rendered points (`>= 19` for a 20-row board)
+- Hot-reload hooks: `^:dev/before-load stop` and `^:dev/after-load init`
+
+### Key Patterns
+
+**Point Transformation:**
+The `point` namespace provides functional transformations using **vector-based coordinates**. All movement functions return new points (immutable):
+
+```clojure
+(point/translate [5 1] [-1 0])  ; Move point left: [5 1] + [-1 0] = [4 1]
+(point/left [5 1])              ; Convenience function: [4 1]
+(point/down [5 1])              ; Move down: [5 2]
+(point/right [5 1])             ; Move right: [6 1]
+```
+
+**Block Movement:**
+Block movement delegates to point functions via `update`:
+
+```clojure
+(update tetro :location point/right)  ; location is a vector [x y]
+```
+
+**Points Collection Transformation:**
+The `points` namespace handles transforming collections of points:
+
+```clojure
+(points/move [[1 0] [2 0] [3 0]] [5 1])  ; Translate all points by [5 1]
+```
+
+**Rendering Pattern:**
+
+1. Extract block from app state
+2. Convert block to absolute grid points via `block/show` (combines shape offsets with block location)
+3. Map over points to create SVG rect elements using `render-points`
+4. Scale grid coordinates to pixels: `(* x 20)` and `(* y 20)` for 20px cells
+5. Points are rendered within an SVG `:g` (group) element
+
+## Shadow-CLJS Configuration Notes
+
+- Entry point: `acme.frontend.app/init`
+- Development HTTP server on port 8080 serves the `public/` directory
+- Uses simple optimizations for release builds
+- Source paths include `src/dev`, `src/main`, and `src/test`
+- CIDER nREPL support configured for Emacs integration
