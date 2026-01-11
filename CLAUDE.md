@@ -50,15 +50,27 @@ Shadow-CLJS provides nREPL support. Connect to the REPL after starting the watch
 ```
 
 **Shape Definitions:**
-Shapes are defined as vectors of `[x y]` coordinate pairs in `block.cljs`. Each tetromino has 4 coordinate pairs representing its blocks in a **4×4 bounding box** relative coordinate space. All shapes have a minimum y-coordinate of 0, allowing them to render at the top of the board when combined with a starting location.
+Shapes are defined as vectors of `[x y]` coordinate pairs in `block.cljs`. Each tetromino has 4 coordinate pairs in a **1-4 coordinate grid** (X: 1-3, Y: varies by shape), with Y-coordinates designed to center around point 2.5 for proper rotation.
+
+**⚠️ IMPORTANT:** Shape Y-coordinates, rotation center in `point.cljs`, and starting location in `create` function are **tightly coupled**. See the "Rotation" section under "Key Patterns" for the critical relationship between these values. The O-block at `[[2 2] [3 2] [2 3] [3 3]]` serves as the reference - it must stay in place when rotated.
+
+**Color Definitions:**
+Each shape has an associated color defined in the `colors` map. Colors are attached to points during rendering via the `points/add-color` transformation.
 
 ### Coordinate Systems
 
-**0-Indexed Grid System:**
+**Dual Coordinate Systems:**
 
-- Game uses **0-indexed coordinates** throughout (rows 0-19, columns 0-9)
+*Shape Space (1-4 grid):*
+- Tetromino shapes defined in a 1-4 coordinate grid
+- Center point at (2.5, 2.5) for rotation calculations
+- X range: 1-3, Y range: 1-4 (varies by piece)
+
+*Board Space (0-indexed):*
+- Game board uses 0-indexed coordinates (rows 0-19, columns 0-9)
 - Grid coordinates are vectors: `[x y]` where x is column, y is row
 - Valid board positions: x ∈ [0, 9], y ∈ [0, 19]
+- Starting location `[2 -2]` compensates for shape space offset (see "Rotation" section for why -2)
 
 **Grid vs Pixel Coordinates:**
 
@@ -103,6 +115,49 @@ The `point` namespace provides functional transformations using **vector-based c
 (point/right [5 1])             ; Move right: [6 1]
 ```
 
+**Rotation:**
+Rotation uses matrix transformations centered at (2.5, 2.5):
+- `mirror [[x y]]` → `[(- 5 x) y]` - horizontal flip
+- `flip [[x y]]` → `[x (- 5 y)]` - vertical flip
+- `transpose [[x y]]` → `[y x]` - swap x and y
+- 90° = flip + transpose
+- 180° = mirror + flip
+- 270° = mirror + transpose
+
+**⚠️ CRITICAL: Rotation Center, Shape Coordinates, and Starting Location are Interconnected**
+
+These three variables MUST be changed together. Changing one without adjusting the others will break rotation behavior (e.g., O-block will move when rotated).
+
+**The relationship:**
+
+1. **Rotation Center: (2.5, 2.5)**
+   - Defined by formulas: `(- 5 x)` and `(- 5 y)` in `point.cljs`
+   - The number 5 = 2 × center coordinate 2.5
+   - Change this by modifying the constants in `mirror` and `flip` functions
+
+2. **Shape Y-Coordinates: Must center around 2.5**
+   - Current: All shapes use Y coordinates where the center ≈ 2.5
+   - T, O, S, Z: Y range 2-3 (center: 2.5) ✓
+   - I, L, J: Y range varies but centers near 2.5
+   - O-block MUST be `[[2 2] [3 2] [2 3] [3 3]]` to stay in place when rotated
+
+3. **Starting Location Y-offset: Compensates for shape coordinates**
+   - Current: `[2 -2]`
+   - Formula: `min_shape_y + location_y = 0` (to render at top row)
+   - With shapes starting at y=2: `2 + (-2) = 0` ✓
+
+**Example: If you change rotation center to (1.5, 1.5):**
+- Change `mirror` to `[(- 3 x) y]` (because 2 × 1.5 = 3)
+- Change `flip` to `[x (- 3 y)]`
+- Shift ALL shapes so minimum y = 0 (center at 1.5)
+- Change starting location to `[2 0]` (because 0 + 0 = 0)
+
+**Color Attachment:**
+Points are transformed into `[[x y] color]` tuples:
+```clojure
+(point/add-color [2 3] "red")  ; → [[2 3] "red"]
+```
+
 **Block Movement:**
 Block movement delegates to point functions via `update`:
 
@@ -120,10 +175,15 @@ The `points` namespace handles transforming collections of points:
 **Rendering Pattern:**
 
 1. Extract block from app state
-2. Convert block to absolute grid points via `block/show` (combines shape offsets with block location)
+2. Convert block to absolute grid points via `block/show`:
+   - Get shape coordinates from shape definition (1-4 space)
+   - Apply rotation transformations (centered at 2.5, 2.5)
+   - Translate to board position by adding location vector
+   - Attach color to each point → `[[[x y] color] ...]`
 3. Map over points to create SVG rect elements using `render-points`
-4. Scale grid coordinates to pixels: `(* x 20)` and `(* y 20)` for 20px cells
-5. Points are rendered within an SVG `:g` (group) element
+4. Destructure each point as `[[x y] color]`
+5. Scale grid coordinates to pixels: `(* x 20)` and `(* y 20)` for 20px cells
+6. Points are rendered within an SVG `:g` (group) element
 
 ## Shadow-CLJS Configuration Notes
 
