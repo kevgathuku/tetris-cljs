@@ -19,33 +19,111 @@
    :z "yellow"
    :j "turquoise"})
 
-(defn create [{:keys [rotation location shape]
-               :or {rotation 0
-                    shape (rand-nth (keys shapes))
-                    location [2 -2]}}]
+(defn create
+  "Creates a new tetromino block.
+
+  Args:
+    opts - Optional map with keys:
+      :shape - Keyword for shape type (:t :o :l :i :s :z :j), defaults to random
+      :rotation - Initial rotation in degrees (0, 90, 180, 270), defaults to 0
+      :location - Starting position vector [x y], defaults to [2 -2]
+
+  Returns:
+    Map with keys :shape, :rotation, :location
+
+  Note: Default location [2 -2] is calibrated to spawn blocks at top of board
+        for shapes centered around y=2.5. See CLAUDE.md rotation section."
+  [{:keys [rotation location shape]
+    :or {rotation 0
+         shape (rand-nth (keys shapes))
+         location [2 -2]}}]
   {:shape shape
    :rotation rotation
    :location location})
 
-(defn move-right [tetro]
+(defn move-right
+  "Moves a tetromino one unit to the right.
+
+  Args:
+    tetro - Tetromino map with :location key
+
+  Returns:
+    Updated tetromino map"
+  [tetro]
   (update tetro :location point/right))
 
-(defn move-left [tetro]
+(defn move-left
+  "Moves a tetromino one unit to the left.
+
+  Args:
+    tetro - Tetromino map with :location key
+
+  Returns:
+    Updated tetromino map"
+  [tetro]
   (update tetro :location point/left))
 
-(defn move-down [tetro]
+(defn move-down
+  "Moves a tetromino one unit down.
+
+  Args:
+    tetro - Tetromino map with :location key
+
+  Returns:
+    Updated tetromino map"
+  [tetro]
   (update tetro :location point/down))
 
-(defn rotate [tetro]
+(defn rotate
+  "Rotates a tetromino 90 degrees clockwise.
+  Rotation wraps at 360 degrees back to 0.
+
+  Args:
+    tetro - Tetromino map with :rotation key
+
+  Returns:
+    Updated tetromino map with new rotation value"
+  [tetro]
   (update tetro :rotation #(mod (+ % 90) 360)))
 
-(defn points [{:keys [shape]}]
+(defn points
+  "Gets the shape definition points for a tetromino.
+
+  Args:
+    tetro - Tetromino map with :shape key
+
+  Returns:
+    Vector of point coordinates [[x y] [x y] ...] in shape-local space (1-4 grid)"
+  [{:keys [shape]}]
   (get shapes shape :unknown))
 
-(defn color [{:keys [shape]}]
+(defn color
+  "Gets the color for a tetromino based on its shape.
+
+  Args:
+    tetro - Tetromino map with :shape key
+
+  Returns:
+    String color value"
+  [{:keys [shape]}]
   (get colors shape :unknown))
 
-(defn show [{:keys [location rotation] :as tetro}]
+(defn show
+  "Converts a tetromino to absolute board coordinates with colors for rendering.
+
+  Transforms the tetromino through the following pipeline:
+  1. Get shape-local coordinates from shape definition
+  2. Apply rotation transformation
+  3. Translate to board position by adding location vector
+  4. Attach color to each point
+
+  Args:
+    tetro - Tetromino map with :shape, :rotation, :location keys
+
+  Returns:
+    Vector of colored point tuples [[[x y] color] ...]
+    where coordinates are in board space (0-indexed grid)"
+  [{:keys [location rotation] :as tetro}]
   (-> tetro (points) (points/rotate rotation) (points/move location) (points/add-color (color tetro)) (vec)))
 
 (comment
