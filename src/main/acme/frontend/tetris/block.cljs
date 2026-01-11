@@ -2,13 +2,13 @@
   (:require [acme.frontend.tetris.point :as point] [acme.frontend.tetris.points :as points]))
 
 (def shapes
-  {:t [[1 0] [2 0] [3 0] [2 1]]
-   :o [[2 0] [3 0] [2 1] [3 1]]
-   :l [[2 0] [2 1] [2 2] [3 2]]
-   :i [[2 0] [2 1] [2 2] [2 3]]
-   :s [[2 0] [3 0] [1 1] [2 1]]
-   :z [[1 0] [2 0] [2 1] [3 1]]
-   :j [[3 0] [3 1] [2 2] [3 2]]})
+  {:t [[1 2] [2 2] [3 2] [2 3]]
+   :o [[2 2] [3 2] [2 3] [3 3]]
+   :l [[2 2] [2 3] [2 4] [3 4]]
+   :i [[2 1] [2 2] [2 3] [2 4]]
+   :s [[2 2] [3 2] [1 3] [2 3]]
+   :z [[1 2] [2 2] [2 3] [3 3]]
+   :j [[3 2] [3 3] [2 4] [3 4]]})
 
 (def colors
   {:t "coral"
@@ -22,7 +22,7 @@
 (defn create [{:keys [rotation location shape]
                :or {rotation 0
                     shape (rand-nth (keys shapes))
-                    location [2 0]}}]
+                    location [2 -2]}}]
   {:shape shape
    :rotation rotation
    :location location})
