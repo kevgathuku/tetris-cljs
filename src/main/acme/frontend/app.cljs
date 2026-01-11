@@ -19,7 +19,7 @@
 
     (if at-bottom?
       (swap! app-state assoc :current-block (block/create {}))
-      (swap! app-state update :current-block block/move-down))))
+      (swap! app-state update :current-block #(block/rotate (block/move-down  %))))))
 
 (defn- stop-tick! []
   (when @tick-interval

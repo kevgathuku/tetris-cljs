@@ -6,6 +6,20 @@
 (defn translate [[x y] [dx dy]]
   [(+ x dx) (+ y dy)])
 
+(defn transpose [[x y]] [y x])
+
+(defn mirror [[x y]] [(- 5 x) y])
+
+(defn flip [[x y]] [x (- 5 y)])
+
+(defn rotate [point degrees]
+  (cond
+    (= 0 degrees)  point
+    (= 90 degrees)  (-> point (flip) (transpose))
+    (= 180 degrees) (-> point (mirror) (flip))
+    (= 270 degrees) (-> point (mirror) (transpose))
+    :else                 :unknown))
+
 (defn add-color [point color]
   [point color])
 
@@ -15,5 +29,6 @@
 
 (comment
   (left [8 0])
+  (- 5 2)
   (-> (origin) (down) (right) (down))
   (down [8 0]))

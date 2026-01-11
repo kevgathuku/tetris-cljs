@@ -45,8 +45,8 @@
 (defn color [{:keys [shape]}]
   (get colors shape :unknown))
 
-(defn show [{:keys [location] :as tetro}]
-  (-> tetro (points) (points/move location) (points/add-color (color tetro)) (vec)))
+(defn show [{:keys [location rotation] :as tetro}]
+  (-> tetro (points) (points/rotate rotation) (points/move location) (points/add-color (color tetro)) (vec)))
 
 (comment
   (def x (create {:location [1 1]}))
@@ -56,6 +56,7 @@
   (color (create {}))
   (color (create {:shape :o}))
   (show (create {:shape :o}))
+  (points/rotate (points  (create {:shape :o})) 90)
   (move-left x)
   (points (create {}))
   (points/move (points x) [2 3])
