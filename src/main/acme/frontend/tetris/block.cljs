@@ -10,10 +10,20 @@
    :z [[1 0] [2 0] [2 1] [3 1]]
    :j [[3 0] [3 1] [2 2] [3 2]]})
 
-(defn create [{:keys [rotation location]
+(def colors
+  {:t "coral"
+   :o "magenta"
+   :l "red"
+   :i "silver"
+   :s "limegreen"
+   :z "yellow"
+   :j "turquoise"})
+
+(defn create [{:keys [rotation location shape]
                :or {rotation 0
+                    shape (rand-nth (keys shapes))
                     location [2 0]}}]
-  {:shape (rand-nth (keys shapes))
+  {:shape shape
    :rotation rotation
    :location location})
 
@@ -32,14 +42,20 @@
 (defn points [{:keys [shape]}]
   (get shapes shape :unknown))
 
+(defn color [{:keys [shape]}]
+  (get colors shape :unknown))
+
 (defn show [{:keys [location] :as tetro}]
-  (-> tetro (points) (points/move location) (vec)))
+  (-> tetro (points) (points/move location) (points/add-color (color tetro)) (vec)))
 
 (comment
   (def x (create {:location [1 1]}))
   (prn x)
   (move-right x)
   (move-down (create {:location [1 2]}))
+  (color (create {}))
+  (color (create {:shape :o}))
+  (show (create {:shape :o}))
   (move-left x)
   (points (create {}))
   (points/move (points x) [2 3])

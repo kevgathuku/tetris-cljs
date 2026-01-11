@@ -33,9 +33,9 @@
 (defn- tick-game! []
   (let [current-block (:current-block @app-state)
         points (block/show current-block)
-        max-y (apply max (map second points))
+        max-y (apply max (map #(second (first %)) points))
         at-bottom? (>= max-y 19)]
-    (js/console.log "Max Y:" max-y "At bottom?" at-bottom?)
+    ; (js/console.log "Max Y:" max-y "At bottom?" at-bottom?)
 
     (if at-bottom?
       (swap! app-state assoc :current-block (block/create {}))
@@ -52,13 +52,13 @@
           (js/setInterval tick-game! 800)))
 
 (defn- render-points [points]
-  (js/console.log "points:" (pr-str  points))
+  ; (js/console.log "points:" (pr-str  points))
   (into [:g]
-        (for [[x y] points] [:rect {:x (* x 20)
-                                    :y (* y 20)
-                                    :width 20
-                                    :height 20
-                                    :fill "red"}])))
+        (for [[[x y] color] points] [:rect {:x (* x 20)
+                                            :y (* y 20)
+                                            :width 20
+                                            :height 20
+                                            :fill color}])))
 
 (defn- board [current-block]
   [:svg {:width 200 :height 400}
@@ -67,14 +67,14 @@
 
 (defn tetris []
   (let [{:keys [current-block]} @app-state]
-    [:div.hero
+    [:div.her
      [:h3 "Tetris"]
      (if current-block
        [:div
         [:p (str "Shape: " (:shape current-block))]
         [:p (str "Rotation: " (:rotation current-block) "°")]
         [:p (str "Location: " (pr-str (:location current-block)))]
-        [:p "Points: " (pr-str (block/points current-block))]]
+        [:p "Points: " (pr-str (block/show current-block))]]
        [:p "No block created yet"])
      [board current-block]]))
 
@@ -104,3 +104,6 @@
   (start-tick!)
   (mount!))
 
+(comment
+  (let [points [[[4 3] "red"] [[4 4] "red"] [[4 5] "red"] [[5 5] "red"]]]
+    (map #(second (first %)) points)))
