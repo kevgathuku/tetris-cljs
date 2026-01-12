@@ -19,7 +19,7 @@
 
     (if at-bottom?
       (swap! app-state assoc :current-block (block/create {}))
-      (swap! app-state update :current-block #(block/rotate (block/move-down  %))))))
+      (swap! app-state update :current-block block/move-down))))
 
 (defn- stop-tick! []
   (when @tick-interval
@@ -57,12 +57,31 @@
        [:p "No block created yet"])
      [board current-block]]))
 
+(defn- handle-keydown
+  "Handles keyboard input for tetris controls.
+
+  Arrow keys: Move and rotate blocks
+  Space: Rotate block
+
+  Prevents default behavior to avoid page scrolling."
+  [e]
+  (when (contains? #{"ArrowLeft" "ArrowRight" "ArrowDown" "ArrowUp" " "} (.-key e))
+    (.preventDefault e))
+  (case (.-key e)
+    "ArrowLeft"  (swap! app-state update :current-block block/move-left)
+    "ArrowRight" (swap! app-state update :current-block block/move-right)
+    "ArrowDown"  (swap! app-state update :current-block block/move-down)
+    "ArrowUp"    (swap! app-state update :current-block block/rotate)
+    " "          (swap! app-state update :current-block block/rotate)
+    nil))
+
 (defn app []
-  [:<>
-   [:div
-    [:h2 {:style {:font-family "sans-serif"}} "Tetris"]
-    [:button {:on-click shuffle-block!}
-     "Shuffle"]]
+  [:div {:tab-index 0
+         :auto-focus true
+         :on-key-down handle-keydown}
+   [:h2 {:style {:font-family "sans-serif"}} "Tetris"]
+   [:button {:on-click shuffle-block!}
+    "Shuffle"]
    [tetris]])
 
 (defonce root (rdom/create-root (.getElementById js/document "app")))
