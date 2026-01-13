@@ -3,23 +3,23 @@
             [acme.frontend.tetris.block :as block]))
 
 (defonce app-state
-  (r/atom {:current-index nil :current-block nil}))
+  (r/atom {:tetro nil}))
 
 (defonce tick-interval (atom nil))
 
 (defn- shuffle-block! []
-  (swap! app-state assoc :current-block (block/create {})))
+  (swap! app-state assoc :tetro (block/create {})))
 
 (defn- tick-game! []
-  (let [current-block (:current-block @app-state)
-        points (block/show current-block)
+  (let [tetro (:tetro @app-state)
+        points (block/show tetro)
         max-y (apply max (map #(second (first %)) points))
         at-bottom? (>= max-y 19)]
     ; (js/console.log "Max Y:" max-y "At bottom?" at-bottom?)
 
     (if at-bottom?
-      (swap! app-state assoc :current-block (block/create {}))
-      (swap! app-state update :current-block block/move-down))))
+      (swap! app-state assoc :tetro (block/create {}))
+      (swap! app-state update :tetro block/move-down))))
 
 (defn- stop-tick! []
   (when @tick-interval
@@ -40,22 +40,22 @@
                                             :height 20
                                             :fill color}])))
 
-(defn- board [current-block]
+(defn- board [tetro]
   [:svg {:width 200 :height 400}
    [:rect {:width 200 :height 400 :fill "black"}]
-   [render-points (block/show current-block)]])
+   [render-points (block/show tetro)]])
 
 (defn tetris []
-  (let [{:keys [current-block]} @app-state]
+  (let [{:keys [tetro]} @app-state]
     [:div
-     (if current-block
+     (if tetro
        [:div
-        [:p (str "Shape: " (:shape current-block))]
-        [:p (str "Rotation: " (:rotation current-block) "°")]
-        [:p (str "Location: " (pr-str (:location current-block)))]
-        [:p "Points: " (pr-str (block/show current-block))]]
+        [:p (str "Shape: " (:shape tetro))]
+        [:p (str "Rotation: " (:rotation tetro) "°")]
+        [:p (str "Location: " (pr-str (:location tetro)))]
+        [:p "Points: " (pr-str (block/show tetro))]]
        [:p "No block created yet"])
-     [board current-block]]))
+     [board tetro]]))
 
 (defn- handle-keydown
   "Handles keyboard input for tetris controls.
@@ -68,11 +68,11 @@
   (when (contains? #{"ArrowLeft" "ArrowRight" "ArrowDown" "ArrowUp" " "} (.-key e))
     (.preventDefault e))
   (case (.-key e)
-    "ArrowLeft"  (swap! app-state update :current-block block/move-left)
-    "ArrowRight" (swap! app-state update :current-block block/move-right)
-    "ArrowDown"  (swap! app-state update :current-block block/move-down)
-    "ArrowUp"    (swap! app-state update :current-block block/rotate)
-    " "          (swap! app-state update :current-block block/rotate)
+    "ArrowLeft"  (swap! app-state update :tetro block/move-left)
+    "ArrowRight" (swap! app-state update :tetro block/move-right)
+    "ArrowDown"  (swap! app-state update :tetro block/move-down)
+    "ArrowUp"    (swap! app-state update :tetro block/rotate)
+    " "          (swap! app-state update :tetro block/rotate)
     nil))
 
 (defn app []
