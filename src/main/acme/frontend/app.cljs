@@ -1,7 +1,6 @@
 (ns acme.frontend.app
   (:require [reagent.core :as r] [reagent.dom.client :as rdom]
-            [acme.frontend.tetris.game :as game]
-            [acme.frontend.tetris.block :as block]))
+            [acme.frontend.tetris.game :as game]))
 
 (defonce app-state
   (r/atom {:game nil}))
@@ -36,7 +35,6 @@
           (js/setInterval tick-game! 800)))
 
 (defn- render-points [points]
-  ; (js/console.log "points:" (pr-str  points))
   (into [:g]
         (for [[[x y] color] points] [:rect {:x (* x 20)
                                             :y (* y 20)
@@ -63,6 +61,7 @@
 
 (defn- handle-keydown
   "Handles keyboard input for tetris controls.
+  Attached to window object for always-available controls.
 
   Arrow keys: Move and rotate blocks
   Space: Rotate block
@@ -80,9 +79,7 @@
     nil))
 
 (defn app []
-  [:div {:tab-index 0
-         :auto-focus true
-         :on-key-down handle-keydown}
+  [:div
    [:h2 {:style {:font-family "sans-serif"}} "Tetris"]
    [:button {:on-click new-tetromino}
     "Shuffle"]
@@ -90,15 +87,28 @@
 
 (defonce root (rdom/create-root (.getElementById js/document "app")))
 
+(defn- attach-keydown-listener! []
+  "Attaches keyboard handler to window for global game controls.
+
+  Pros: Always works, no focus issues, better game UX
+  Cons: Global side effect, must clean up on unmount"
+  (.addEventListener js/window "keydown" handle-keydown))
+
+(defn- remove-keydown-listener! []
+  "Removes window keyboard handler. Called on hot-reload and unmount."
+  (.removeEventListener js/window "keydown" handle-keydown))
+
 (defn mount! []
   (rdom/render root [app]))
 
 (defn ^:dev/before-load stop []
-  (stop-tick!))
+  (stop-tick!)
+  (remove-keydown-listener!))
 
 (defn ^:export ^:dev/after-load init []
   (new-game)
   (start-tick!)
+  (attach-keydown-listener!)
   (mount!))
 
 (comment
