@@ -25,6 +25,25 @@ npx shadow-cljs release frontend
 **REPL connection:**
 Shadow-CLJS provides nREPL support. Connect to the REPL after starting the watch command. The `.nrepl-port` file contains the port number.
 
+# Clojure REPL Evaluation
+
+The command `clj-nrepl-eval` is installed on your path for evaluating Clojure code via nREPL.
+
+**Discover nREPL servers:**
+
+`clj-nrepl-eval --discover-ports`
+
+**Evaluate code:**
+
+`clj-nrepl-eval -p <port> "<clojure-code>"`
+
+With timeout (milliseconds)
+
+`clj-nrepl-eval -p <port> --timeout 5000 "<clojure-code>"`
+
+The REPL session persists between evaluations - namespaces and state are maintained.
+Always use `:reload` when requiring namespaces to pick up changes.
+
 ## Architecture
 
 ### Module Structure
@@ -62,11 +81,13 @@ Each shape has an associated color defined in the `colors` map. Colors are attac
 **Dual Coordinate Systems:**
 
 *Shape Space (1-4 grid):*
+
 - Tetromino shapes defined in a 1-4 coordinate grid
 - Center point at (2.5, 2.5) for rotation calculations
 - X range: 1-3, Y range: 1-4 (varies by piece)
 
 *Board Space (0-indexed):*
+
 - Game board uses 0-indexed coordinates (rows 0-19, columns 0-9)
 - Grid coordinates are vectors: `[x y]` where x is column, y is row
 - Valid board positions: x ∈ [0, 9], y ∈ [0, 19]
@@ -117,6 +138,7 @@ The `point` namespace provides functional transformations using **vector-based c
 
 **Rotation:**
 Rotation uses matrix transformations centered at (2.5, 2.5):
+
 - `mirror [[x y]]` → `[(- 5 x) y]` - horizontal flip
 - `flip [[x y]]` → `[x (- 5 y)]` - vertical flip
 - `transpose [[x y]]` → `[y x]` - swap x and y
@@ -147,6 +169,7 @@ These three variables MUST be changed together. Changing one without adjusting t
    - With shapes starting at y=2: `2 + (-2) = 0` ✓
 
 **Example: If you change rotation center to (1.5, 1.5):**
+
 - Change `mirror` to `[(- 3 x) y]` (because 2 × 1.5 = 3)
 - Change `flip` to `[x (- 3 y)]`
 - Shift ALL shapes so minimum y = 0 (center at 1.5)
@@ -154,6 +177,7 @@ These three variables MUST be changed together. Changing one without adjusting t
 
 **Color Attachment:**
 Points are transformed into `[[x y] color]` tuples:
+
 ```clojure
 (point/add-color [2 3] "red")  ; → [[2 3] "red"]
 ```
@@ -192,3 +216,42 @@ The `points` namespace handles transforming collections of points:
 - Uses simple optimizations for release builds
 - Source paths include `src/dev`, `src/main`, and `src/test`
 - CIDER nREPL support configured for Emacs integration
+
+## ClojureScript Best Practices & Gotchas
+
+### Avoid Special Form Names
+
+**CRITICAL:** Never name functions after ClojureScript/Clojure special forms or JavaScript constructors. These create ambiguity and cause confusing errors.
+
+**Problematic names to avoid:**
+- `new` - Conflicts with the JavaScript object constructor special form
+- `def`, `if`, `let`, `loop`, `recur`, `do`, `quote`, `var`, `fn`, `set!`
+- Other special forms listed in the ClojureScript documentation
+
+**Example of the problem:**
+
+```clojure
+;; ❌ BAD - Conflicts with special form
+(defn new []
+  (-> (init)
+      (new-tetro)))
+
+;; When called from within the same namespace:
+(new)  ; Error: "null is not a constructor"
+       ; Compiler confuses function with JavaScript constructor
+
+;; ✅ GOOD - Use descriptive, non-conflicting names
+(defn new-game []
+  (-> (init)
+      (new-tetro)))
+
+(new-game)  ; Works correctly
+```
+
+**Error symptoms:**
+- "null is not a constructor"
+- "X is not a function"
+- Unexpected behavior when calling functions without namespace qualification
+
+**Solution:**
+Use descriptive, domain-specific names like `new-game`, `create-game`, `init-state`, etc. instead of generic names that might conflict with language primitives.
