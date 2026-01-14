@@ -1,25 +1,29 @@
 (ns acme.frontend.app
   (:require [reagent.core :as r] [reagent.dom.client :as rdom]
+            [acme.frontend.tetris.game :as game]
             [acme.frontend.tetris.block :as block]))
 
 (defonce app-state
-  (r/atom {:tetro nil}))
+  (r/atom {:game nil}))
 
 (defonce tick-interval (atom nil))
 
-(defn- shuffle-block! []
-  (swap! app-state assoc :tetro (block/create {})))
+(defn- new-game []
+  (swap! app-state assoc :game (game/new-game)))
+
+(defn- new-tetromino []
+  (swap! app-state update :game game/new-tetro))
 
 (defn- tick-game! []
-  (let [tetro (:tetro @app-state)
-        points (block/show tetro)
+  (let [game (:game @app-state)
+        points (:points game)
         max-y (apply max (map #(second (first %)) points))
         at-bottom? (>= max-y 19)]
     ; (js/console.log "Max Y:" max-y "At bottom?" at-bottom?)
 
     (if at-bottom?
-      (swap! app-state assoc :tetro (block/create {}))
-      (swap! app-state update :tetro block/move-down))))
+      (swap! app-state update :game game/new-tetro)
+      (swap! app-state update :game game/down))))
 
 (defn- stop-tick! []
   (when @tick-interval
@@ -40,22 +44,22 @@
                                             :height 20
                                             :fill color}])))
 
-(defn- board [tetro]
+(defn- board [game]
   [:svg {:width 200 :height 400}
    [:rect {:width 200 :height 400 :fill "black"}]
-   [render-points (block/show tetro)]])
+   [render-points (:points game)]])
 
 (defn tetris []
-  (let [{:keys [tetro]} @app-state]
+  (let [{:keys [game]} @app-state]
     [:div
-     (if tetro
+     (if game
        [:div
-        [:p (str "Shape: " (:shape tetro))]
-        [:p (str "Rotation: " (:rotation tetro) "°")]
-        [:p (str "Location: " (pr-str (:location tetro)))]
-        [:p "Points: " (pr-str (block/show tetro))]]
+        [:p (str "Shape: " (:shape (:tetro game)))]
+        [:p (str "Rotation: " (:rotation (:tetro game)) "°")]
+        [:p (str "Location: " (pr-str (:location (:tetro game))))]
+        [:p "Points: " (pr-str (:points game))]]
        [:p "No block created yet"])
-     [board tetro]]))
+     [board game]]))
 
 (defn- handle-keydown
   "Handles keyboard input for tetris controls.
@@ -68,11 +72,11 @@
   (when (contains? #{"ArrowLeft" "ArrowRight" "ArrowDown" "ArrowUp" " "} (.-key e))
     (.preventDefault e))
   (case (.-key e)
-    "ArrowLeft"  (swap! app-state update :tetro block/move-left)
-    "ArrowRight" (swap! app-state update :tetro block/move-right)
-    "ArrowDown"  (swap! app-state update :tetro block/move-down)
-    "ArrowUp"    (swap! app-state update :tetro block/rotate)
-    " "          (swap! app-state update :tetro block/rotate)
+    "ArrowLeft"  (swap! app-state update :game game/left)
+    "ArrowRight" (swap! app-state update :game game/right)
+    "ArrowDown"  (swap! app-state update :game game/down)
+    "ArrowUp"    (swap! app-state update :game game/rotate)
+    " "          (swap! app-state update :game game/rotate)
     nil))
 
 (defn app []
@@ -80,7 +84,7 @@
          :auto-focus true
          :on-key-down handle-keydown}
    [:h2 {:style {:font-family "sans-serif"}} "Tetris"]
-   [:button {:on-click shuffle-block!}
+   [:button {:on-click new-tetromino}
     "Shuffle"]
    [tetris]])
 
@@ -93,7 +97,7 @@
   (stop-tick!))
 
 (defn ^:export ^:dev/after-load init []
-  (shuffle-block!)
+  (new-game)
   (start-tick!)
   (mount!))
 
