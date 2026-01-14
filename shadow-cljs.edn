@@ -9,7 +9,11 @@
   [cider/cider-nrepl "0.58.0"]]
 
  :dev-http {8080 "public"}
+ :nrepl {:port 3333}
  :builds
  {:frontend {:target :browser
-             :modules {:main {:init-fn acme.frontend.app/init}}}}
+             :modules {:main {:init-fn acme.frontend.app/init}}}
+  :test {:target :node-test
+         :output-to "out/test.js"
+         :autorun true}}
  :release {:compiler-options {:optimizations :simple}}}
