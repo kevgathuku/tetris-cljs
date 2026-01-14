@@ -25,9 +25,11 @@
         new (move-fn (:tetro game))
         valid (points/valid? (block/show new))
         moved (block/maybe-move old new valid)]
-    (-> game
-        (assoc :tetro moved)
-        (show))))
+    (if (identical? moved old)
+      game  ; No change, return game as-is to avoid unnecessary updates
+      (-> game
+          (assoc :tetro moved)
+          (show)))))
 
 (defn down [game]
   (move game block/move-down))
