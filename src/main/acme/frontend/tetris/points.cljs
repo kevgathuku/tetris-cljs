@@ -38,6 +38,9 @@
   [points degrees]
   (map #(point/rotate % degrees) points))
 
+(defn valid? [points]
+  (every? point/in-bounds? points))
+
 (comment
   (add-color [[1 2]] "red")
   (rotate [[0 1] [1 1]] 90)

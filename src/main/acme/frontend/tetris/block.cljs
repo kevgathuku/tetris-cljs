@@ -86,6 +86,20 @@
   [tetro]
   (update tetro :rotation #(mod (+ % 90) 360)))
 
+(defn maybe-move
+  "Returns new tetromino if valid, otherwise returns old tetromino.
+  Used for conditional movement validation.
+
+  Args:
+    old - Original tetromino before movement
+    new - New tetromino after attempted movement
+    valid? - Boolean indicating if the move is valid
+
+  Returns:
+    new if valid? is true, old if valid? is false"
+  [old new valid?]
+  (if valid? new old))
+
 (defn points
   "Gets the shape definition points for a tetromino.
 
