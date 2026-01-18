@@ -1,7 +1,19 @@
 (ns acme.frontend.tetris.game
   (:require
    [acme.frontend.tetris.block :as block]
+   [acme.frontend.tetris.point :as point]
    [acme.frontend.tetris.points :as points]))
+
+(def wall-kick-offsets
+  "Wall kick offsets to try when rotation fails.
+  Attempts are made in order: original position, right, left, further right/left, up."
+  [[0 0]   ; No kick - try rotation at current position
+   [1 0]   ; Kick right
+   [-1 0]  ; Kick left
+   [2 0]   ; Kick further right
+   [-2 0]  ; Kick further left
+   [0 -1]  ; Kick up (useful for I-piece and edge cases)
+   ])
 
 (defn init []
   {:tetro nil :score 0 :points []})
@@ -25,11 +37,10 @@
         new (move-fn (:tetro game))
         valid (points/valid? (block/show new))
         moved (block/maybe-move old new valid)]
-    (if (identical? moved old)
-      game  ; No change, return game as-is to avoid unnecessary updates
-      (-> game
-          (assoc :tetro moved)
-          (show)))))
+    (if (identical? moved old) game
+        (-> game
+            (assoc :tetro moved)
+            (show)))))
 
 (defn down [game]
   (move game block/move-down))
@@ -40,8 +51,43 @@
 (defn right [game]
   (move game block/move-right))
 
-(defn rotate [game]
-  (move game block/rotate))
+(defn- try-wall-kicks
+  "Attempts rotation with wall kicks.
+  Tries each offset in wall-kick-offsets until a valid position is found.
+
+  Args:
+    old-tetro - Original tetromino before rotation
+    rotated-tetro - Tetromino after rotation (but before position adjustment)
+
+  Returns:
+    Valid tetromino with wall kick applied, or old-tetro if no kick works"
+  [old-tetro rotated-tetro]
+  (let [try-offset (fn [offset]
+                     (let [kicked (update rotated-tetro :location #(point/translate % offset))
+                           valid? (points/valid? (block/show kicked))]
+                       (when valid? kicked)))]
+    (or (some try-offset wall-kick-offsets)
+        old-tetro)))
+
+(defn rotate
+  "Rotates the current tetromino 90° clockwise with wall kick support.
+  If rotation at current position fails, tries alternative positions (wall kicks)
+  by shifting the piece left, right, or up.
+
+  Args:
+    game - Game state map with :tetro key
+
+  Returns:
+    Updated game state with rotated tetromino, or unchanged if no valid rotation exists"
+  [game]
+  (let [old (:tetro game)
+        rotated (block/rotate old)
+        kicked (try-wall-kicks old rotated)]
+    (if (identical? kicked old)
+      game
+      (-> game
+          (assoc :tetro kicked)
+          (show)))))
 
 (comment
   ;; Test scenarios for show function
