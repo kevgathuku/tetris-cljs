@@ -6,6 +6,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 A Tetris game implementation in ClojureScript using Reagent (React wrapper) and Shadow-CLJS for compilation and hot-reloading.
 
+## Documentation
+
+Additional documentation can be found in the `doc/` directory:
+- `doc/state-management.md` - Guide to using Reagent atoms vs. regular Clojure atoms
+
 ## Development Workflow
 
 **Start development server:**
