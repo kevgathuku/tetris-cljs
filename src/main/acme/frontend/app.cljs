@@ -14,15 +14,7 @@
   (swap! app-state update :game game/new-tetro))
 
 (defn- tick-game! []
-  (let [game (:game @app-state)
-        points (:points game)
-        max-y (apply max (map #(second (first %)) points))
-        at-bottom? (>= max-y 19)]
-    ; (js/console.log "Max Y:" max-y "At bottom?" at-bottom?)
-
-    (if at-bottom?
-      (swap! app-state update :game game/new-tetro)
-      (swap! app-state update :game game/down))))
+  (swap! app-state update :game game/down))
 
 (defn- stop-tick! []
   (when @tick-interval
@@ -45,6 +37,7 @@
 (defn- board [game]
   [:svg {:width 200 :height 400}
    [:rect {:width 200 :height 400 :fill "black"}]
+   [render-points (:junkyard game)]
    [render-points (:points game)]])
 
 (defn tetris []

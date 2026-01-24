@@ -96,19 +96,19 @@
   [point] (translate point [1 0]))
 
 (defn in-bounds?
-  "Checks if a point is within valid board x-coordinate bounds (0-9).
+  "Checks if a point is within valid board bounds (x: 0-9, y: <= 19).
   Handles both plain points [x y] and colored points [[x y] color].
 
   Args:
     point - Either [x y] or [[x y] color] in board coordinates
 
   Returns:
-    true if 0 <= x <= 9, false otherwise"
+    true if 0 <= x <= 9 and y <= 19, false otherwise"
   [point]
-  (let [[x _] (if (vector? (first point))
+  (let [[x y] (if (vector? (first point))
                 (first point)  ; Colored point [[x y] color] -> extract [x y]
                 point)]        ; Plain point [x y]
-    (and (>= x 0) (<= x 9))))
+    (and (>= x 0) (<= x 9) (<= y 19))))
 
 (comment
   (left [8 0])

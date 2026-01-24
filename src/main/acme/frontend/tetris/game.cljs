@@ -16,7 +16,7 @@
    ])
 
 (defn init []
-  {:tetro nil :score 0 :points []})
+  {:tetro nil :score 0 :points [] :junkyard {}})
 
 (defn show [game]
   (if-let [tetro (:tetro game)]
@@ -32,24 +32,70 @@
   (-> (init)
       (new-tetro)))
 
-(defn move [game move-fn]
+(defn- move-data [game move-fn]
   (let [old (:tetro game)
-        new (move-fn (:tetro game))
-        valid (points/valid? (block/show new))
-        moved (block/maybe-move old new valid)]
-    (if (identical? moved old) game
-        (-> game
-            (assoc :tetro moved)
-            (show)))))
+        new (move-fn old)
+        valid (points/valid? (block/show new))]
+    {:old old :new new :valid valid}))
 
-(defn down [game]
-  (move game block/move-down))
+(defn move [game move-fn]
+  (let [{:keys [old new valid]} (move-data game move-fn)
+        moved (block/maybe-move old new valid)]
+    (if (identical? moved old)
+      game
+      (-> game
+          (assoc :tetro moved)
+          (show)))))
+
+(defn- merge-tetro [game old]
+  (let [new-junkyard (into (:junkyard game)
+                           (block/show old))]
+    (assoc game :junkyard new-junkyard)))
+
+(defn- move-down-or-merge [game {:keys [old new valid]}]
+  (if valid
+    (-> game
+        (assoc :tetro new)
+        (show))
+    (-> game
+        (merge-tetro old)
+        (new-tetro))))
 
 (defn left [game]
   (move game block/move-left))
 
 (defn right [game]
   (move game block/move-right))
+
+(defn down [game]
+  (move-down-or-merge game (move-data game block/move-down)))
+
+(comment
+  ;; move-data returns {:old, :new, :valid}
+  (move-data (new-game) block/move-down)
+
+  ;; down moves piece when not at bottom
+  (let [g (new-game)]
+    {:before (:tetro g)
+     :after (:tetro (down g))})
+
+  ;; down merges when at bottom (y=17 puts lowest point at y=19+1=20, invalid)
+  (let [g (-> (init)
+              (assoc :tetro (block/create {:shape :o :location [2 17]}))
+              (show))]
+    {:before-junkyard (:junkyard g)
+     :after-junkyard (:junkyard (down g))
+     :new-tetro (:tetro (down g))})
+
+  ;; verify junkyard accumulates across multiple merges
+  (let [g (-> (init)
+              (assoc :tetro (block/create {:shape :o :location [2 17]}))
+              (show)
+              (down)
+              (assoc :tetro (block/create {:shape :o :location [5 17]}))
+              (show)
+              (down))]
+    (count (:junkyard g))))
 
 (defn- try-wall-kicks
   "Attempts rotation with wall kicks.
