@@ -27,7 +27,7 @@ A classic Tetris game implementation in ClojureScript using Reagent (React) and 
 
 ```bash
 # Clone the repository
-git clone <repository-url>
+git clone git@github.com:kevgathuku/tetris-cljs.git
 cd tetris
 
 # Install dependencies
