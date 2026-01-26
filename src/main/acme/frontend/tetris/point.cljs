@@ -110,7 +110,7 @@
   (contains? junkyard (coords point)))
 
 (defn valid?
-  "Moves a point one unit right (increases x by 1)."
+  "Checks if a point is valid (in bounds and not colliding with junkyard)."
   [point junkyard]
   (and (in-bounds? point) (not (collide? point junkyard))))
 

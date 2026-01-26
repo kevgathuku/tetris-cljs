@@ -38,7 +38,9 @@
   [points degrees]
   (map #(point/rotate % degrees) points))
 
-(defn valid? [points junkyard]
+(defn valid?
+  "Checks if all points are valid (in bounds and not colliding with junkyard)."
+  [points junkyard]
   (every? #(point/valid? % junkyard) points))
 
 (comment

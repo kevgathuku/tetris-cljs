@@ -15,24 +15,34 @@
    [0 -1]  ; Kick up (useful for I-piece and edge cases)
    ])
 
-(defn init []
+(defn init
+  "Creates initial game state with empty tetro, score, points, and junkyard."
+  []
   {:tetro nil :score 0 :points [] :junkyard {}})
 
-(defn show [game]
+(defn show
+  "Updates game :points to reflect current tetro's rendered position."
+  [game]
   (if-let [tetro (:tetro game)]
     (assoc game :points (block/show tetro))
     (assoc game :points [])))
 
-(defn new-tetro [game]
+(defn new-tetro
+  "Spawns a new random tetromino and updates rendered points."
+  [game]
   (-> game
       (assoc :tetro (block/create {}))
       (show)))
 
-(defn new-game []
+(defn new-game
+  "Creates a fresh game with a new tetromino."
+  []
   (-> (init)
       (new-tetro)))
 
-(defn inc-score [game value]
+(defn inc-score
+  "Increments game score by the given value."
+  [game value]
   (update game :score + value))
 
 (defn- move-data [game move-fn]
@@ -41,7 +51,9 @@
         valid (points/valid? (block/show new) (:junkyard game))]
     {:old old :new new :valid valid}))
 
-(defn move [game move-fn]
+(defn move
+  "Attempts to move tetro using move-fn. Returns unchanged game if move is invalid."
+  [game move-fn]
   (let [{:keys [old new valid]} (move-data game move-fn)
         moved (block/maybe-move old new valid)]
     (if (identical? moved old)
@@ -65,13 +77,19 @@
         (inc-score 1)
         (new-tetro))))
 
-(defn left [game]
+(defn left
+  "Moves tetro left if valid."
+  [game]
   (move game block/move-left))
 
-(defn right [game]
+(defn right
+  "Moves tetro right if valid."
+  [game]
   (move game block/move-right))
 
-(defn down [game]
+(defn down
+  "Moves tetro down if valid, otherwise merges into junkyard and spawns new tetro."
+  [game]
   (move-down-or-merge game (move-data game block/move-down)))
 
 (comment
