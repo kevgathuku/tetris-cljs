@@ -2,12 +2,15 @@
 
 A classic Tetris game implementation in ClojureScript using Reagent (React) and Shadow-CLJS.
 
+[![Tests](https://github.com/kevgathuku/tetris-cljs/actions/workflows/test.yml/badge.svg)](https://github.com/kevgathuku/tetris-cljs/actions/workflows/test.yml)
+
 ## Features
 
 - Classic Tetris gameplay with 7 tetromino shapes (T, O, L, I, S, Z, J)
 - Keyboard controls (arrow keys and space for rotation)
 - Automatic piece falling with configurable speed
-- Boundary validation with collision detection
+- Boundary validation and collision detection with settled pieces (junkyard)
+- Wall kicks for rotation near edges
 - Hot-reloading for development
 - Pure functional game logic with immutable data structures
 
@@ -20,7 +23,8 @@ A classic Tetris game implementation in ClojureScript using Reagent (React) and 
 
 ## Prerequisites
 
-- Node.js (v14 or higher recommended)
+- Node.js (v20 or higher recommended)
+- Java 21 (required by Shadow-CLJS/Google Closure Compiler)
 - npm or yarn
 
 ## Installation
@@ -109,11 +113,11 @@ The game uses two coordinate systems:
 ```
 src/main/acme/frontend/
 ├── tetris/
-│   ├── point.cljs      # Core point manipulation
-│   ├── points.cljs     # Collection-level operations
-│   ├── block.cljs      # Tetromino logic and rendering
-│   └── game.cljs       # Game state management
-└── app.cljs            # Main application and UI
+│   ├── point.cljs      # Core point manipulation (coords, bounds, collision)
+│   ├── points.cljs     # Collection-level operations (move, rotate, valid)
+│   ├── block.cljs      # Tetromino logic (shapes, movement, rotation)
+│   └── game.cljs       # Game state (move, merge, score, wall kicks)
+└── app.cljs            # Main application, UI, and game loop
 ```
 
 ### Data Model
@@ -131,7 +135,8 @@ src/main/acme/frontend/
 ```clojure
 {:tetro {...}       ; Current falling tetromino
  :score 0           ; Player score
- :points [...]}     ; Rendered points with colors [[[x y] color] ...]
+ :points [...]      ; Rendered points with colors [[[x y] color] ...]
+ :junkyard {...}}   ; Settled pieces as {[x y] color} map
 ```
 
 ### Rotation System
@@ -156,16 +161,24 @@ The rotation center, shape coordinates, and starting location are tightly couple
 Tests are written using ClojureScript's built-in test framework:
 
 ```clojure
-(deftest in-bounds?-test
-  (testing "with plain points [x y]"
+(deftest in-bounds-test
+  (testing "x boundaries with plain points"
     (is (true? (point/in-bounds? [5 10])))))
 ```
+
+Test files:
+
+- `point_test.cljs` - Point operations (coords, in-bounds, collide, valid)
+- `points_test.cljs` - Collection operations (move, add-color, rotate, valid)
+- `game_test.cljs` - Game logic (init, movement, collision detection)
 
 Run tests with:
 
 ```bash
 npx shadow-cljs compile test
 ```
+
+Tests run automatically on push/PR via GitHub Actions (`.github/workflows/test.yml`).
 
 ## Development Notes
 
