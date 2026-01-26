@@ -38,10 +38,11 @@
   [points degrees]
   (map #(point/rotate % degrees) points))
 
-(defn valid? [points]
-  (every? point/in-bounds? points))
+(defn valid? [points junkyard]
+  (every? #(point/valid? % junkyard) points))
 
 (comment
   (add-color [[1 2]] "red")
+  ; (every? #(point/valid?) '(1 2))
   (rotate [[0 1] [1 1]] 90)
   (move [[0 1] [1 1]] [2 2]))

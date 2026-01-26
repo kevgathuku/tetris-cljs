@@ -35,7 +35,7 @@
 (defn- move-data [game move-fn]
   (let [old (:tetro game)
         new (move-fn old)
-        valid (points/valid? (block/show new))]
+        valid (points/valid? (block/show new) (:junkyard game))]
     {:old old :new new :valid valid}))
 
 (defn move [game move-fn]
@@ -107,10 +107,10 @@
 
   Returns:
     Valid tetromino with wall kick applied, or old-tetro if no kick works"
-  [old-tetro rotated-tetro]
+  [old-tetro rotated-tetro junkyard]
   (let [try-offset (fn [offset]
                      (let [kicked (update rotated-tetro :location #(point/translate % offset))
-                           valid? (points/valid? (block/show kicked))]
+                           valid? (points/valid? (block/show kicked) junkyard)]
                        (when valid? kicked)))]
     (or (some try-offset wall-kick-offsets)
         old-tetro)))
@@ -128,7 +128,7 @@
   [game]
   (let [old (:tetro game)
         rotated (block/rotate old)
-        kicked (try-wall-kicks old rotated)]
+        kicked (try-wall-kicks old rotated (:junkyard game))]
     (if (identical? kicked old)
       game
       (-> game

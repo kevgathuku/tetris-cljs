@@ -95,6 +95,14 @@
   "Moves a point one unit right (increases x by 1)."
   [point] (translate point [1 0]))
 
+(defn coords
+  "Extracts [x y] coordinates from a point.
+  Handles both plain [x y] and colored [[x y] color] formats."
+  [point]
+  (if (vector? (first point))
+    (first point)
+    point))
+
 (defn in-bounds?
   "Checks if a point is within valid board bounds (x: 0-9, y: <= 19).
   Handles both plain points [x y] and colored points [[x y] color].
@@ -105,10 +113,18 @@
   Returns:
     true if 0 <= x <= 9 and y <= 19, false otherwise"
   [point]
-  (let [[x y] (if (vector? (first point))
-                (first point)  ; Colored point [[x y] color] -> extract [x y]
-                point)]        ; Plain point [x y]
+  (let [[x y] (coords point)]
     (and (>= x 0) (<= x 9) (<= y 19))))
+
+(defn collide?
+  "Checks if a point collides with any of the points in the junkyard"
+  [point junkyard]
+  (contains? junkyard (coords point)))
+
+(defn valid?
+  "Moves a point one unit right (increases x by 1)."
+  [point junkyard]
+  (and (in-bounds? point) (not (collide? point junkyard))))
 
 (comment
   (left [8 0])
