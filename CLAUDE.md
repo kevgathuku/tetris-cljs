@@ -224,6 +224,10 @@ The `points` namespace handles transforming collections of points:
 
 ## ClojureScript Best Practices & Gotchas
 
+### Test Naming Conventions
+
+- Avoid `?` in test function names (e.g., use `in-bounds-test` not `in-bounds?-test`)
+
 ### Avoid Special Form Names
 
 **CRITICAL:** Never name functions after ClojureScript/Clojure special forms or JavaScript constructors. These create ambiguity and cause confusing errors.
