@@ -46,7 +46,7 @@
      (if game
        [:div
         [:p (str "Shape: " (:shape (:tetro game)))]
-        [:p (str "Rotation: " (:rotation (:tetro game)) "°")]
+        [:p (str "Score " (:score game))]
         [:p (str "Location: " (pr-str (:location (:tetro game))))]
         [:p "Points: " (pr-str (:points game))]]
        [:p "No block created yet"])

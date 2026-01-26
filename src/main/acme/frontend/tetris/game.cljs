@@ -32,6 +32,9 @@
   (-> (init)
       (new-tetro)))
 
+(defn inc-score [game value]
+  (update game :score + value))
+
 (defn- move-data [game move-fn]
   (let [old (:tetro game)
         new (move-fn old)
@@ -59,6 +62,7 @@
         (show))
     (-> game
         (merge-tetro old)
+        (inc-score 1)
         (new-tetro))))
 
 (defn left [game]
@@ -140,6 +144,7 @@
 
   ;; Scenario 1: Show with nil tetro (initial state)
   (show (init))
+  (:score (inc-score (new-game) 14))
   ;; Expected: {:tetro nil, :score 0, :points []}
   ;; Empty points because tetro is nil (now handled gracefully)
 
