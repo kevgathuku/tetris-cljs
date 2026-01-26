@@ -71,18 +71,6 @@
     (= 270 degrees) (-> point (mirror) (transpose))
     :else                 :unknown))
 
-(defn add-color
-  "Attaches a color to a point, creating a point-color tuple.
-
-  Args:
-    point - Vector [x y]
-    color - String color value (e.g., 'red', '#FF0000')
-
-  Returns:
-    Vector [[x y] color]"
-  [point color]
-  [point color])
-
 (defn left
   "Moves a point one unit left (decreases x by 1)."
   [point] (translate point [-1 0]))

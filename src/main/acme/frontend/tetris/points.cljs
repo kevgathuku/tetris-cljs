@@ -24,7 +24,7 @@
   Returns:
     Lazy sequence of point-color tuples [[[x y] color] ...]"
   [points color]
-  (map #(point/add-color % color) points))
+  (map (fn [point] [point color]) points))
 
 (defn rotate
   "Rotates all points in a collection by the specified degrees.
