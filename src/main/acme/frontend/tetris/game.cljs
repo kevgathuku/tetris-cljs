@@ -18,14 +18,14 @@
 (defn init
   "Creates initial game state with empty tetro, score, points, and junkyard."
   []
-  {:tetro nil :score 0 :points [] :junkyard {}})
+  {:tetro nil :score 0 :points {} :junkyard {}})
 
 (defn show
-  "Updates game :points to reflect current tetro's rendered position."
+  "Updates game :points to include junkyard and current tetro."
   [game]
-  (if-let [tetro (:tetro game)]
-    (assoc game :points (block/show tetro))
-    (assoc game :points [])))
+  (let [tetro-points (when-let [tetro (:tetro game)]
+                       (block/show tetro))]
+    (assoc game :points (merge (:junkyard game) tetro-points))))
 
 (defn new-tetro
   "Spawns a new random tetromino and updates rendered points."
@@ -163,7 +163,7 @@
   ;; Scenario 1: Show with nil tetro (initial state)
   (show (init))
   (:score (inc-score (new-game) 14))
-  ;; Expected: {:tetro nil, :score 0, :points []}
+  ;; Expected: {:tetro nil, :score 0, :points {}, :junkyard {}}
   ;; Empty points because tetro is nil (now handled gracefully)
 
   ;; Scenario 1b: Show on already-shown game (idempotent test)
@@ -174,14 +174,15 @@
   ;; Scenario 2: Show with a newly created tetro
   (show {:tetro (block/create {:shape :o :location [5 5]})
          :score 0
-         :points []})
-  ;; Expected: Game with :points containing 4 colored points for O-block
+         :points {}
+         :junkyard {}})
+  ;; Expected: Game with :points containing 4 colored entries {[x y] color}
   ;; Points should be in board coordinates (5+x, 5+y) with "magenta" color
 
   ;; Scenario 3: Show after creating new game
   (new-game)
   ;; Expected: Fresh game with random tetro and points populated
-  ;; :tetro should be a block map, :points should have 4 colored points
+  ;; :tetro should be a block map, :points should be a map with 4 entries
 
   ;; Scenario 4: Show after movement
   (-> (new-game)
@@ -200,7 +201,8 @@
   ;; Scenario 6: Invalid movement (should preserve old position)
   (-> {:tetro (block/create {:shape :i :location [10 5]})
        :score 0
-       :points []}
+       :points {}
+       :junkyard {}}
       (show)
       (right))  ; Try to move right from x=10 (out of bounds)
   ;; Expected: Tetro should stay at [10 5] because move is invalid

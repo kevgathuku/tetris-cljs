@@ -135,8 +135,8 @@ src/main/acme/frontend/
 ```clojure
 {:tetro {...}       ; Current falling tetromino
  :score 0           ; Player score
- :points [...]      ; Rendered points with colors [[[x y] color] ...]
- :junkyard {...}}   ; Settled pieces as {[x y] color} map
+ :points {...}      ; All rendered points {[x y] color} (junkyard + current tetro)
+ :junkyard {...}}   ; Settled pieces only {[x y] color}
 ```
 
 ### Rotation System

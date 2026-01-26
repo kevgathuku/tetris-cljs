@@ -135,10 +135,9 @@
     tetro - Tetromino map with :shape, :rotation, :location keys
 
   Returns:
-    Vector of colored point tuples [[[x y] color] ...]
-    where coordinates are in board space (0-indexed grid)"
+    Map of {[x y] color} in board space (0-indexed grid)"
   [{:keys [location rotation] :as tetro}]
-  (-> tetro (points) (points/rotate rotation) (points/move location) (points/add-color (color tetro)) (vec)))
+  (-> tetro (points) (points/rotate rotation) (points/move location) (points/add-color (color tetro)) (into {})))
 
 (comment
   (def x (create {:location [1 1]}))

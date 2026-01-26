@@ -8,7 +8,7 @@
     (let [g (game/init)]
       (is (nil? (:tetro g)))
       (is (= 0 (:score g)))
-      (is (= [] (:points g)))
+      (is (= {} (:points g)))
       (is (= {} (:junkyard g))))))
 
 (deftest new-game-test

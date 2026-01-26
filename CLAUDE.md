@@ -181,10 +181,11 @@ These three variables MUST be changed together. Changing one without adjusting t
 - Change starting location to `[2 0]` (because 0 + 0 = 0)
 
 **Color Attachment:**
-Points are transformed into `[[x y] color]` tuples:
+Points are transformed into `{[x y] color}` maps via `points/add-color`:
 
 ```clojure
-(point/add-color [2 3] "red")  ; → [[2 3] "red"]
+(points/add-color [[2 3] [3 3]] "red")  ; → ([[2 3] "red"] [[3 3] "red"])
+(into {} (points/add-color [[2 3]] "red"))  ; → {[2 3] "red"}
 ```
 
 **Block Movement:**
@@ -203,14 +204,14 @@ The `points` namespace handles transforming collections of points:
 
 **Rendering Pattern:**
 
-1. Extract block from app state
-2. Convert block to absolute grid points via `block/show`:
+1. `game/show` merges junkyard with current tetro into `:points` map
+2. `block/show` converts tetro to `{[x y] color}` map:
    - Get shape coordinates from shape definition (1-4 space)
    - Apply rotation transformations (centered at 2.5, 2.5)
    - Translate to board position by adding location vector
-   - Attach color to each point → `[[[x y] color] ...]`
-3. Map over points to create SVG rect elements using `render-points`
-4. Destructure each point as `[[x y] color]`
+   - Attach color to each point → `{[x y] color}`
+3. `render-points` iterates the map to create SVG rect elements
+4. Destructure each entry as `[[x y] color]`
 5. Scale grid coordinates to pixels: `(* x 20)` and `(* y 20)` for 20px cells
 6. Points are rendered within an SVG `:g` (group) element
 

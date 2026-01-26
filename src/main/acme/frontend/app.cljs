@@ -37,7 +37,6 @@
 (defn- board [game]
   [:svg {:width 200 :height 400}
    [:rect {:width 200 :height 400 :fill "black"}]
-   [render-points (:junkyard game)]
    [render-points (:points game)]])
 
 (defn tetris []
