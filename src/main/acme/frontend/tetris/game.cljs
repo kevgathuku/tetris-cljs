@@ -52,35 +52,45 @@
         valid (points/valid? points (:junkyard game))]
     (assoc game :game-over (not valid))))
 
-(defn- move-data [game move-fn]
-  (let [old (:tetro game)
-        new (move-fn old)
-        valid (points/valid? (block/show new) (:junkyard game))]
-    {:old old :new new :valid valid}))
+(defn- move-data
+  "Centralizes movement validation so callers can decide how to handle
+  valid vs invalid moves without duplicating collision detection logic."
+  [game move-fn]
+  (let [current-tetro (:tetro game)
+        moved-tetro (move-fn current-tetro)
+        valid? (points/valid? (block/show moved-tetro) (:junkyard game))]
+    {:current-tetro current-tetro :moved-tetro moved-tetro :valid? valid?}))
 
 (defn move
   "Attempts to move tetro using move-fn. Returns unchanged game if move is invalid."
   [game move-fn]
-  (let [{:keys [old new valid]} (move-data game move-fn)
-        moved (block/maybe-move old new valid)]
-    (if (identical? moved old)
+  (let [{:keys [current-tetro moved-tetro valid?]} (move-data game move-fn)
+        result-tetro (block/maybe-move current-tetro moved-tetro valid?)]
+    (if (identical? result-tetro current-tetro)
       game
       (-> game
-          (assoc :tetro moved)
+          (assoc :tetro result-tetro)
           (show)))))
 
-(defn- merge-tetro [game old]
+(defn- merge-tetro
+  "Transfers a tetromino's points to the junkyard when it can no longer
+  move down. This is the transition from 'active piece' to 'settled debris'."
+  [game settled-tetro]
   (let [new-junkyard (into (:junkyard game)
-                           (block/show old))]
+                           (block/show settled-tetro))]
     (assoc game :junkyard new-junkyard)))
 
-(defn- move-down-or-merge [game {:keys [old new valid]}]
-  (if valid
+(defn- advance-tetro
+  "Handles the two outcomes of downward movement: either the piece moves down,
+  or it has landed and triggers the settle-spawn cycle. Separated from lateral
+  movement because only downward movement can end a piece's journey."
+  [game {:keys [current-tetro moved-tetro valid?]}]
+  (if valid?
     (-> game
-        (assoc :tetro new)
+        (assoc :tetro moved-tetro)
         (show))
     (-> game
-        (merge-tetro old)
+        (merge-tetro current-tetro)
         (inc-score 1)
         (new-tetro)
         (check-game-over))))
@@ -98,10 +108,10 @@
 (defn down
   "Moves tetro down if valid, otherwise merges into junkyard and spawns new tetro."
   [game]
-  (move-down-or-merge game (move-data game block/move-down)))
+  (advance-tetro game (move-data game block/move-down)))
 
 (comment
-  ;; move-data returns {:old, :new, :valid}
+  ;; move-data returns {:current-tetro, :moved-tetro, :valid?}
   (move-data (new-game) block/move-down)
 
   ;; down moves piece when not at bottom
@@ -156,13 +166,13 @@
   Returns:
     Updated game state with rotated tetromino, or unchanged if no valid rotation exists"
   [game]
-  (let [old (:tetro game)
-        rotated (block/rotate old)
-        kicked (try-wall-kicks old rotated (:junkyard game))]
-    (if (identical? kicked old)
+  (let [current-tetro (:tetro game)
+        rotated-tetro (block/rotate current-tetro)
+        adjusted-tetro (try-wall-kicks current-tetro rotated-tetro (:junkyard game))]
+    (if (identical? adjusted-tetro current-tetro)
       game
       (-> game
-          (assoc :tetro kicked)
+          (assoc :tetro adjusted-tetro)
           (show)))))
 
 (comment
