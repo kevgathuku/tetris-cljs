@@ -18,7 +18,7 @@
 (defn init
   "Creates initial game state with empty tetro, score, points, and junkyard."
   []
-  {:tetro nil :score 0 :points {} :junkyard {}})
+  {:tetro nil :score 0 :points {} :junkyard {} :game-over false})
 
 (defn show
   "Updates game :points to include junkyard and current tetro."
@@ -44,6 +44,13 @@
   "Increments game score by the given value."
   [game value]
   (update game :score + value))
+
+(defn check-game-over
+  "Checks if new tetro spawns in an invalid position (game over)."
+  [game]
+  (let [points (block/show (:tetro game))
+        valid (points/valid? points (:junkyard game))]
+    (assoc game :game-over (not valid))))
 
 (defn- move-data [game move-fn]
   (let [old (:tetro game)
@@ -75,7 +82,8 @@
     (-> game
         (merge-tetro old)
         (inc-score 1)
-        (new-tetro))))
+        (new-tetro)
+        (check-game-over))))
 
 (defn left
   "Moves tetro left if valid."

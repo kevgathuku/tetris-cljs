@@ -9,7 +9,8 @@
       (is (nil? (:tetro g)))
       (is (= 0 (:score g)))
       (is (= {} (:points g)))
-      (is (= {} (:junkyard g))))))
+      (is (= {} (:junkyard g)))
+      (is (false? (:game-over g))))))
 
 (deftest new-game-test
   (testing "creates game with tetromino"
@@ -60,3 +61,26 @@
                 (game/show))
           after-down (game/down g)]
       (is (= 6 (count (:junkyard after-down)))))))
+
+(deftest check-game-over-test
+  (testing "game-over is false when tetro is in valid position"
+    (let [g (-> (game/init)
+                (assoc :tetro (block/create {:shape :o :location [4 0]}))
+                (game/check-game-over))]
+      (is (false? (:game-over g)))))
+
+  (testing "game-over is true when tetro collides with junkyard"
+    (let [g (-> (game/init)
+                (assoc :junkyard {[6 2] "red" [7 2] "red"})
+                (assoc :tetro (block/create {:shape :o :location [4 0]}))
+                (game/check-game-over))]
+      (is (true? (:game-over g)))))
+
+  (testing "game-over is true when junkyard fills spawn area"
+    (let [junkyard (into {} (for [x (range 10) y (range 4)]
+                              [[x y] "gray"]))
+          g (-> (game/init)
+                (assoc :junkyard junkyard)
+                (assoc :tetro (block/create {:shape :o :location [4 0]}))
+                (game/check-game-over))]
+      (is (true? (:game-over g))))))
